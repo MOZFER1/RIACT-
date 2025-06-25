@@ -1,669 +1,553 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
+import './AI.css';
 
-const AICreateStudio = () => {
-  const [currentPage, setCurrentPage] = useState('dashboard');
-  const [currentTab, setCurrentTab] = useState('images');
-  const [selectedStyle, setSelectedStyle] = useState('');
-  const [showDropdown, setShowDropdown] = useState(false);
-  const [results, setResults] = useState([]);
-  const [showResults, setShowResults] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
-  const [loadingType, setLoadingType] = useState('');
-
-  // Form states
+function AI() {
+  // State for active page
+  const [activePage, setActivePage] = useState('dashboard');
+  
+  // Dashboard states
+  const [activeTab, setActiveTab] = useState('images');
   const [imageDesc, setImageDesc] = useState('');
   const [videoDesc, setVideoDesc] = useState('');
-  const [imgDimension, setImgDimension] = useState('Square (1024x1024)');
-  const [imgQuality, setImgQuality] = useState('Standard');
-  const [vidDuration, setVidDuration] = useState('5 seconds');
-  const [vidResolution, setVidResolution] = useState('720p');
+  const [generatedContent, setGeneratedContent] = useState([]);
+  const [showResults, setShowResults] = useState(false);
+  const [isGenerating, setIsGenerating] = useState(false);
 
-  const styleButtons = [
-    'Photorealistic', 'Digital Art', 'Oil Painting', 'Sketch', 
-    'Watercolor', 'Abstract', 'Anime', 'Cyberpunk'
-  ];
+  // Gallery states
+  const [galleryTab, setGalleryTab] = useState('my-content');
+  const [layout, setLayout] = useState('grid');
+  const [searchQuery, setSearchQuery] = useState('');
 
-  const generateImage = () => {
-    if (!imageDesc.trim()) {
-      alert('يرجى إدخال وصف للصورة');
-      return;
+  // Auth states
+  const [loginData, setLoginData] = useState({ email: '', password: '' });
+  const [registerData, setRegisterData] = useState({
+    username: '',
+    email: '',
+    password: '',
+    confirmPassword: ''
+  });
+
+  // Profile states
+  const [profileData, setProfileData] = useState({
+    username: 'John Doe',
+    email: 'john@example.com',
+    bio: 'Content Creator'
+  });
+
+  // Mock content data
+  const [content] = useState([
+    {
+      id: 1,
+      type: 'image',
+      url: 'https://via.placeholder.com/400x300',
+      description: 'A serene mountain landscape',
+      timestamp: '2024-03-20T10:00:00Z'
+    },
+    {
+      id: 2,
+      type: 'video',
+      url: 'https://via.placeholder.com/400x300',
+      description: 'City lights time-lapse',
+      timestamp: '2024-03-19T15:30:00Z'
     }
+  ]);
 
-    setShowResults(true);
-    setIsLoading(true);
-    setLoadingType('image');
-
+  // Handlers
+  const handleGenerate = (type) => {
+    setIsGenerating(true);
+    // Simulate API call with timeout
     setTimeout(() => {
-      const newResult = {
+      const newContent = {
         id: Date.now(),
-        type: 'image',
-        prompt: imageDesc,
-        style: selectedStyle || 'Default',
-        dimension: imgDimension,
-        quality: imgQuality,
-        timestamp: new Date().toLocaleString('ar')
+        type: type,
+        description: type === 'image' ? imageDesc : videoDesc,
+        url: 'https://via.placeholder.com/400x300',
+        timestamp: new Date().toISOString()
       };
-      
-      setResults(prev => [newResult, ...prev]);
-      setIsLoading(false);
-      setImageDesc('');
-    }, 3000);
+      setGeneratedContent([newContent, ...generatedContent]);
+      setShowResults(true);
+      setIsGenerating(false);
+    }, 2000);
   };
 
-  const generateVideo = () => {
-    if (!videoDesc.trim()) {
-      alert('يرجى إدخال وصف للفيديو');
-      return;
-    }
-
-    setShowResults(true);
-    setIsLoading(true);
-    setLoadingType('video');
-
-    setTimeout(() => {
-      const newResult = {
-        id: Date.now(),
-        type: 'video',
-        prompt: videoDesc,
-        duration: vidDuration,
-        resolution: vidResolution,
-        timestamp: new Date().toLocaleString('ar')
-      };
-      
-      setResults(prev => [newResult, ...prev]);
-      setIsLoading(false);
-      setVideoDesc('');
-    }, 5000);
+  const handleLogin = (e) => {
+    e.preventDefault();
+    console.log('Login attempt:', loginData);
+    setActivePage('dashboard');
   };
 
-  const deleteResult = (id) => {
-    if (window.confirm('هل أنت متأكد من حذف هذا المحتوى؟')) {
-      setResults(prev => prev.filter(result => result.id !== id));
-      if (results.length === 1) {
-        setShowResults(false);
-      }
-    }
+  const handleRegister = (e) => {
+    e.preventDefault();
+    console.log('Registration attempt:', registerData);
+    setActivePage('dashboard');
   };
 
-  const downloadResult = () => {
-    alert('سيتم تحميل المحتوى قريباً...');
+  const handleProfileUpdate = (e) => {
+    e.preventDefault();
+    console.log('Profile update:', profileData);
   };
 
-  const shareResult = () => {
-    alert('سيتم مشاركة المحتوى قريباً...');
-  };
-
-  useEffect(() => {
-    const handleClickOutside = (event) => {
-      if (!event.target.closest('.user-menu')) {
-        setShowDropdown(false);
-      }
-    };
-
-    document.addEventListener('click', handleClickOutside);
-    return () => document.removeEventListener('click', handleClickOutside);
-  }, []);
-
-  const Header = () => (
-    <header className="bg-white bg-opacity-10 backdrop-blur-md px-8 py-4 flex justify-between items-center border-b border-white border-opacity-20">
-      <div className="flex items-center gap-2 text-white text-2xl font-bold">
-        <span className="text-4xl">⚡</span>
-        <span>AICreate Studio</span>
+  // Render functions
+  const renderHeader = () => (
+    <header className="header">
+      <div className="logo">
+        <span className="logo-icon">⚡</span>
+        <span className="logo-text">AICreate Studio</span>
       </div>
-      
-      <nav className="flex gap-8">
-        {[
-          { id: 'dashboard', label: 'Dashboard' },
-          { id: 'gallery', label: 'Gallery' },
-          { id: 'register', label: 'Sign Up' }
-        ].map(item => (
-          <button
-            key={item.id}
-            onClick={() => setCurrentPage(item.id)}
-            className={`text-white text-opacity-80 px-4 py-2 rounded-lg transition-all duration-300 hover:bg-white hover:bg-opacity-20 hover:text-white ${
-              currentPage === item.id ? 'bg-white bg-opacity-20 text-white' : ''
-            }`}
-          >
-            {item.label}
-          </button>
-        ))}
-      </nav>
-
-      <div className="relative">
-        <div 
-          className="flex items-center gap-2 text-white cursor-pointer"
-          onClick={(e) => {
-            e.stopPropagation();
-            setShowDropdown(!showDropdown);
-          }}
+      <nav className="nav">
+        <button 
+          className={`nav-link ${activePage === 'dashboard' ? 'active' : ''}`}
+          onClick={() => setActivePage('dashboard')}
         >
-          <span className="text-xl">🔔</span>
-          <span className="text-xl">👤</span>
-          <span>MOZFER</span>
-          <span className={`transition-transform duration-300 ${showDropdown ? 'rotate-180' : ''}`}>▼</span>
+          Dashboard
+        </button>
+        <button 
+          className={`nav-link ${activePage === 'gallery' ? 'active' : ''}`}
+          onClick={() => setActivePage('gallery')}
+        >
+          Gallery
+        </button>
+        <button 
+          className={`nav-link ${activePage === 'register' ? 'active' : ''}`}
+          onClick={() => setActivePage('register')}
+        >
+          Sign Up
+        </button>
+      </nav>
+      <div className="user-menu">
+        <span className="notif-dot">🔔</span>
+        <span className="user-icon">👤</span>
+        <span className="user-name">MOZFER</span>
+        <span className="dropdown-arrow">▼</span>
+        <div className="dropdown">
+          <button onClick={() => setActivePage('profile')}>Profile</button>
+          <button onClick={() => setActivePage('login')}>Log out</button>
         </div>
-        
-        {showDropdown && (
-          <div className="absolute top-full right-0 bg-white rounded-lg p-2 min-w-[150px] shadow-lg z-50 opacity-100 transform translate-y-0 transition-all duration-300">
-            <button
-              onClick={() => setCurrentPage('profile')}
-              className="block w-full text-left px-4 py-2 text-gray-800 hover:bg-gray-100 rounded transition-colors"
-            >
-              Profile
-            </button>
-            <button
-              onClick={() => setCurrentPage('login')}
-              className="block w-full text-left px-4 py-2 text-gray-800 hover:bg-gray-100 rounded transition-colors"
-            >
-              Log out
-            </button>
-          </div>
-        )}
       </div>
     </header>
   );
 
-  const DashboardPage = () => (
-    <div className="space-y-8">
-      <section className="text-center text-white mb-12">
-        <h1 className="text-5xl font-bold mb-4">
-          <span className="font-bold">Create Stunning</span>{' '}
-          <span className="bg-gradient-to-r from-pink-400 to-red-500 bg-clip-text text-transparent">
-            AI Content
-          </span>
-        </h1>
-        <p className="text-xl opacity-90 max-w-2xl mx-auto">
-          Transform your ideas into beautiful images and videos using cutting-edge AI technology. 
-          Create, customize, and download professional content in minutes.
-        </p>
+  const renderDashboard = () => (
+    <div className="dashboard">
+      <section className="hero">
+        <h1><span className="bold">Create Stunning</span> <span className="highlight">AI Content</span></h1>
+        <p className="subtitle">Transform your ideas into beautiful images and videos using cutting-edge AI technology.</p>
       </section>
 
       {showResults && (
-        <section className="bg-white bg-opacity-10 backdrop-blur-md rounded-3xl p-8 mb-8">
-          <div className="flex justify-between items-center mb-6">
-            <h2 className="text-2xl font-bold text-white">Generated Content</h2>
-            <button
-              onClick={() => setShowResults(false)}
-              className="text-white text-2xl hover:text-red-400 transition-colors"
-            >
-              ✕
-            </button>
+        <section className="results-section">
+          <div className="results-header">
+            <h2>Generated Content</h2>
+            <button className="close-results-btn" onClick={() => setShowResults(false)}>✕</button>
           </div>
-          
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {isLoading && (
-              <div className="bg-white bg-opacity-10 p-6 rounded-2xl">
-                <div className="text-center">
-                  <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-white mx-auto mb-4"></div>
-                  <p className="text-white">جاري إنشاء {loadingType === 'image' ? 'الصورة' : 'الفيديو'}...</p>
-                </div>
-              </div>
-            )}
-            
-            {results.map(result => (
-              <div key={result.id} className="bg-white bg-opacity-10 p-6 rounded-2xl">
-                <div className="text-center mb-4">
-                  <div className="text-6xl mb-4">{result.type === 'image' ? '🖼️' : '🎬'}</div>
-                  <span className="text-white font-semibold">
-                    {result.type === 'image' ? 'صورة' : 'فيديو'}
-                  </span>
-                  <p className="text-white text-sm mt-2 opacity-90">{result.prompt}</p>
-                  <div className="text-xs text-white opacity-70 mt-2">
-                    {result.type === 'image' ? 
-                      `الأبعاد: ${result.dimension} | الجودة: ${result.quality} | النمط: ${result.style}` :
-                      `المدة: ${result.duration} | الدقة: ${result.resolution}`
-                    }
-                  </div>
-                </div>
-                
-                <div className="flex gap-2 justify-center">
-                  <button
-                    onClick={downloadResult}
-                    className="px-3 py-1 bg-blue-500 text-white rounded text-sm hover:bg-blue-600 transition-colors"
-                  >
-                    تحميل
-                  </button>
-                  <button
-                    onClick={shareResult}
-                    className="px-3 py-1 bg-green-500 text-white rounded text-sm hover:bg-green-600 transition-colors"
-                  >
-                    مشاركة
-                  </button>
-                  <button
-                    onClick={() => deleteResult(result.id)}
-                    className="px-3 py-1 bg-red-500 text-white rounded text-sm hover:bg-red-600 transition-colors"
-                  >
-                    حذف
-                  </button>
-                </div>
+          <div className="results-grid">
+            {generatedContent.map(content => (
+              <div key={content.id} className="content-item">
+                {content.type === 'image' ? (
+                  <img src={content.url} alt={content.description} />
+                ) : (
+                  <video src={content.url} controls />
+                )}
+                <p>{content.description}</p>
               </div>
             ))}
           </div>
         </section>
       )}
 
-      <section className="bg-white bg-opacity-10 backdrop-blur-md rounded-3xl p-8">
-        <div className="flex justify-center gap-4 mb-8">
-          <button
-            onClick={() => setCurrentTab('images')}
-            className={`px-6 py-3 rounded-full transition-all duration-300 ${
-              currentTab === 'images'
-                ? 'bg-gradient-to-r from-blue-500 to-purple-600 text-white'
-                : 'border-2 border-white border-opacity-30 text-white hover:bg-white hover:bg-opacity-20'
-            }`}
+      <section className="tabs-section">
+        <div className="tabs">
+          <button 
+            className={`tab-btn ${activeTab === 'images' ? 'active' : ''}`}
+            onClick={() => setActiveTab('images')}
           >
             Generate Images
           </button>
-          <button
-            onClick={() => setCurrentTab('videos')}
-            className={`px-6 py-3 rounded-full transition-all duration-300 ${
-              currentTab === 'videos'
-                ? 'bg-gradient-to-r from-blue-500 to-purple-600 text-white'
-                : 'border-2 border-white border-opacity-30 text-white hover:bg-white hover:bg-opacity-20'
-            }`}
+          <button 
+            className={`tab-btn ${activeTab === 'videos' ? 'active' : ''}`}
+            onClick={() => setActiveTab('videos')}
           >
             Generate Videos
           </button>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          <div className="lg:col-span-2">
-            <div className="bg-white bg-opacity-10 p-8 rounded-2xl">
-              {currentTab === 'images' ? (
-                <>
-                  <label className="block text-white mb-2 font-medium">
-                    Describe the image you want to create...
-                  </label>
-                  <textarea
-                    value={imageDesc}
-                    onChange={(e) => setImageDesc(e.target.value)}
-                    className="w-full p-4 border-none rounded-xl bg-white bg-opacity-90 text-gray-800 resize-none min-h-[100px] mb-4"
-                    placeholder="e.g., 'A serene mountain landscape at sunset with purple clouds'"
-                  />
-                  
-                  <div className="flex flex-wrap gap-2 mb-4">
-                    {styleButtons.map(style => (
-                      <button
-                        key={style}
-                        onClick={() => setSelectedStyle(selectedStyle === style ? '' : style)}
-                        className={`px-4 py-2 rounded-full transition-all duration-300 ${
-                          selectedStyle === style
-                            ? 'bg-gradient-to-r from-blue-500 to-purple-600 text-white'
-                            : 'bg-white bg-opacity-20 border border-white border-opacity-30 text-white hover:bg-gradient-to-r hover:from-blue-500 hover:to-purple-600'
-                        }`}
-                      >
-                        {style}
-                      </button>
-                    ))}
-                  </div>
-                  
-                  <div className="flex gap-4 mb-4">
-                    <select
-                      value={imgDimension}
-                      onChange={(e) => setImgDimension(e.target.value)}
-                      className="flex-1 p-3 border-none rounded-lg bg-white bg-opacity-90 text-gray-800"
-                    >
-                      <option>Square (1024x1024)</option>
-                      <option>Portrait (1024x1536)</option>
-                      <option>Landscape (1536x1024)</option>
-                    </select>
-                    <select
-                      value={imgQuality}
-                      onChange={(e) => setImgQuality(e.target.value)}
-                      className="flex-1 p-3 border-none rounded-lg bg-white bg-opacity-90 text-gray-800"
-                    >
-                      <option>Standard</option>
-                      <option>High</option>
-                      <option>Ultra</option>
-                    </select>
-                  </div>
-                  
-                  <button
-                    onClick={generateImage}
-                    className="w-full bg-gradient-to-r from-blue-500 to-purple-600 text-white p-4 rounded-xl text-lg font-bold hover:transform hover:-translate-y-1 transition-all duration-200"
-                  >
-                    Generate Image
-                  </button>
-                </>
-              ) : (
-                <>
-                  <label className="block text-white mb-2 font-medium">
-                    Describe the video scene...
-                  </label>
-                  <textarea
-                    value={videoDesc}
-                    onChange={(e) => setVideoDesc(e.target.value)}
-                    className="w-full p-4 border-none rounded-xl bg-white bg-opacity-90 text-gray-800 resize-none min-h-[100px] mb-4"
-                    placeholder="e.g., 'A time-lapse of city lights at night with moving traffic'"
-                  />
-                  
-                  <div className="flex gap-4 mb-4">
-                    <select
-                      value={vidDuration}
-                      onChange={(e) => setVidDuration(e.target.value)}
-                      className="flex-1 p-3 border-none rounded-lg bg-white bg-opacity-90 text-gray-800"
-                    >
-                      <option>5 seconds</option>
-                      <option>10 seconds</option>
-                      <option>20 seconds</option>
-                    </select>
-                    <select
-                      value={vidResolution}
-                      onChange={(e) => setVidResolution(e.target.value)}
-                      className="flex-1 p-3 border-none rounded-lg bg-white bg-opacity-90 text-gray-800"
-                    >
-                      <option>720p</option>
-                      <option>1080p</option>
-                      <option>4K</option>
-                    </select>
-                  </div>
-                  
-                  <button
-                    onClick={generateVideo}
-                    className="w-full bg-gradient-to-r from-blue-500 to-purple-600 text-white p-4 rounded-xl text-lg font-bold hover:transform hover:-translate-y-1 transition-all duration-200"
-                  >
-                    Generate Video
-                  </button>
-                </>
-              )}
+        <div className="tab-content">
+          {activeTab === 'images' ? (
+            <div className="generate-container">
+              <div className="generate-form">
+                <label htmlFor="image-desc" className="form-label">Describe the image you want to create...</label>
+                <textarea
+                  id="image-desc"
+                  className="input-area"
+                  value={imageDesc}
+                  onChange={(e) => setImageDesc(e.target.value)}
+                  placeholder="e.g., 'A serene mountain landscape at sunset with purple clouds'"
+                />
+                <div className="style-buttons">
+                  <button>Photorealistic</button>
+                  <button>Digital Art</button>
+                  <button>Oil Painting</button>
+                  <button>Sketch</button>
+                  <button>Watercolor</button>
+                  <button>Abstract</button>
+                  <button>Anime</button>
+                  <button>Cyberpunk</button>
+                </div>
+                <div className="dropdown-row">
+                  <select id="img-dim">
+                    <option>Square (1024x1024)</option>
+                    <option>Portrait (1024x1536)</option>
+                    <option>Landscape (1536x1024)</option>
+                  </select>
+                  <select id="img-quality">
+                    <option>Standard</option>
+                    <option>High</option>
+                    <option>Ultra</option>
+                  </select>
+                </div>
+                <button className="generate-btn" onClick={() => handleGenerate('image')}>
+                  Generate Image
+                </button>
+              </div>
+              <div className="tips-box">
+                <h3>💡 Image Generation Tips</h3>
+                <ul>
+                  <li>Be specific about colors, lighting, and composition</li>
+                  <li>Include art style preferences</li>
+                  <li>Mention camera angles or perspectives</li>
+                  <li>Add mood or atmosphere descriptions</li>
+                  <li>Try different style presets for unique looks</li>
+                </ul>
+              </div>
             </div>
-          </div>
-          
-          <div className="bg-white bg-opacity-10 p-6 rounded-2xl">
-            <h3 className="text-white text-lg font-semibold mb-4">
-              💡 {currentTab === 'images' ? 'Image' : 'Video'} Generation Tips
-            </h3>
-            <ul className="text-white text-sm space-y-2 opacity-90">
-              {currentTab === 'images' ? (
-                <>
-                  <li className="flex items-start gap-2">
-                    <span className="text-green-400 font-bold">✓</span>
-                    Be specific about colors, lighting, and composition
-                  </li>
-                  <li className="flex items-start gap-2">
-                    <span className="text-green-400 font-bold">✓</span>
-                    Include art style preferences (realistic, cartoon, etc.)
-                  </li>
-                  <li className="flex items-start gap-2">
-                    <span className="text-green-400 font-bold">✓</span>
-                    Mention camera angles or perspectives
-                  </li>
-                  <li className="flex items-start gap-2">
-                    <span className="text-green-400 font-bold">✓</span>
-                    Add mood or atmosphere descriptions
-                  </li>
-                  <li className="flex items-start gap-2">
-                    <span className="text-green-400 font-bold">✓</span>
-                    Try different style presets for unique looks
-                  </li>
-                </>
-              ) : (
-                <>
-                  <li className="flex items-start gap-2">
-                    <span className="text-green-400 font-bold">✓</span>
-                    Describe motion and movement clearly
-                  </li>
-                  <li className="flex items-start gap-2">
-                    <span className="text-green-400 font-bold">✓</span>
-                    Specify camera movements (pan, zoom, etc.)
-                  </li>
-                  <li className="flex items-start gap-2">
-                    <span className="text-green-400 font-bold">✓</span>
-                    Include timing references (slow motion, fast)
-                  </li>
-                  <li className="flex items-start gap-2">
-                    <span className="text-green-400 font-bold">✓</span>
-                    Mention lighting changes or effects
-                  </li>
-                  <li className="flex items-start gap-2">
-                    <span className="text-green-400 font-bold">✓</span>
-                    Keep scenes simple for better results
-                  </li>
-                </>
-              )}
-            </ul>
-          </div>
+          ) : (
+            <div className="generate-container">
+              <div className="generate-form">
+                <label htmlFor="video-desc" className="form-label">Describe the video scene...</label>
+                <textarea
+                  id="video-desc"
+                  className="input-area"
+                  value={videoDesc}
+                  onChange={(e) => setVideoDesc(e.target.value)}
+                  placeholder="e.g., 'A time-lapse of city lights at night with moving traffic'"
+                />
+                <div className="dropdown-row">
+                  <select id="vid-duration">
+                    <option>5 seconds</option>
+                    <option>10 seconds</option>
+                    <option>20 seconds</option>
+                  </select>
+                  <select id="vid-res">
+                    <option>720p</option>
+                    <option>1080p</option>
+                    <option>4K</option>
+                  </select>
+                </div>
+                <button className="generate-btn video" onClick={() => handleGenerate('video')}>
+                  Generate Video
+                </button>
+              </div>
+              <div className="tips-box">
+                <h3>🎬 Video Generation Tips</h3>
+                <ul>
+                  <li>Describe motion and movement clearly</li>
+                  <li>Specify camera movements</li>
+                  <li>Include timing references</li>
+                  <li>Mention lighting changes or effects</li>
+                  <li>Keep scenes simple for better results</li>
+                </ul>
+              </div>
+            </div>
+          )}
         </div>
       </section>
     </div>
   );
 
-  const GalleryPage = () => (
-    <div className="space-y-8">
-      <section className="text-center text-white mb-8">
-        <h1 className="text-4xl font-bold mb-2">Content Gallery</h1>
-        <p className="text-lg opacity-90">Explore and manage your AI-generated content</p>
+  const renderGallery = () => (
+    <div className="gallery">
+      <section className="gallery-header">
+        <h1>Content Gallery</h1>
+        <p>Explore and manage your AI-generated content</p>
       </section>
 
-      <section className="bg-white bg-opacity-10 backdrop-blur-md p-4 rounded-2xl flex justify-between items-center">
-        <div className="flex-1 max-w-md">
+      <section className="gallery-controls">
+        <div className="search-bar">
           <input
             type="text"
             placeholder="Search your content..."
-            className="w-full px-6 py-3 rounded-full border-none bg-white bg-opacity-90 text-gray-800"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
           />
         </div>
-        <div className="flex gap-2">
-          <button className="bg-white bg-opacity-20 text-white px-4 py-3 rounded-lg hover:bg-opacity-30 transition-all">
-            🔍 Newest First ▾
-          </button>
-          <button className="bg-white bg-opacity-20 text-white px-4 py-3 rounded-lg hover:bg-opacity-30 transition-all">
+        <div className="gallery-actions">
+          <button className="filter-btn">🔍 Newest First ▾</button>
+          <button 
+            className={`layout-btn ${layout === 'grid' ? 'active' : ''}`}
+            onClick={() => setLayout('grid')}
+          >
             🔲
           </button>
-          <button className="bg-white bg-opacity-20 text-white px-4 py-3 rounded-lg hover:bg-opacity-30 transition-all">
+          <button 
+            className={`layout-btn ${layout === 'list' ? 'active' : ''}`}
+            onClick={() => setLayout('list')}
+          >
             ☰
           </button>
         </div>
       </section>
 
-      <section className="flex justify-center gap-4 mb-8">
-        <button className="bg-gradient-to-r from-blue-500 to-purple-600 text-white px-6 py-3 rounded-full">
+      <section className="gallery-tabs">
+        <button 
+          className={`tab ${galleryTab === 'my-content' ? 'active' : ''}`}
+          onClick={() => setGalleryTab('my-content')}
+        >
           My Content
         </button>
-        <button className="border-2 border-white border-opacity-30 text-white px-6 py-3 rounded-full hover:bg-white hover:bg-opacity-20 transition-all">
+        <button 
+          className={`tab ${galleryTab === 'community' ? 'active' : ''}`}
+          onClick={() => setGalleryTab('community')}
+        >
           Community
         </button>
       </section>
 
-      <section className="text-center text-white bg-white bg-opacity-10 p-12 rounded-3xl backdrop-blur-md">
-        <h2 className="text-2xl font-bold mb-4">Your Creations (0)</h2>
-        <div className="text-6xl mb-8">📁</div>
-        <p className="text-lg opacity-90">Start creating your first AI-generated content!</p>
+      <section className={`gallery-content ${layout}`}>
+        {content.length > 0 ? (
+          content.map(item => (
+            <div key={item.id} className="content-item">
+              {item.type === 'image' ? (
+                <img src={item.url} alt={item.description} />
+              ) : (
+                <video src={item.url} controls />
+              )}
+              <div className="content-info">
+                <p>{item.description}</p>
+                <span className="timestamp">
+                  {new Date(item.timestamp).toLocaleDateString()}
+                </span>
+              </div>
+            </div>
+          ))
+        ) : (
+          <div className="gallery-empty">
+            <h2>Your Creations (0)</h2>
+            <div className="empty-content">
+              <div style={{ fontSize: '4rem', margin: '2rem 0' }}>📁</div>
+              <p>Start creating your first AI-generated content!</p>
+            </div>
+          </div>
+        )}
       </section>
     </div>
   );
 
-  const AuthForm = ({ isLogin = true }) => (
-    <div className="flex justify-center items-center min-h-[60vh]">
-      <div className="bg-white bg-opacity-10 backdrop-blur-md p-8 rounded-3xl w-full max-w-md border border-white border-opacity-20">
-        <div className="text-center text-white mb-8">
-          <h1 className="text-3xl font-bold mb-2">
-            {isLogin ? 'Welcome Back' : 'Create Account'}
-          </h1>
-          <p className="opacity-90">
-            {isLogin ? 'Sign in to your account' : 'Join us to start your journey!'}
-          </p>
+  const renderLogin = () => (
+    <div className="auth-container">
+      <form className="auth-card" onSubmit={handleLogin}>
+        <div className="auth-header">
+          <h1>Welcome Back</h1>
+          <p>Sign in to your account</p>
         </div>
-
-        <form className="space-y-4">
-          {!isLogin && (
-            <input
-              type="text"
-              placeholder="Username"
-              required
-              className="w-full p-4 border border-white border-opacity-30 rounded-xl bg-white bg-opacity-10 text-white placeholder-white placeholder-opacity-70"
-            />
-          )}
+        <div className="input-group">
           <input
             type="email"
             placeholder="Email address"
+            value={loginData.email}
+            onChange={(e) => setLoginData({ ...loginData, email: e.target.value })}
             required
-            className="w-full p-4 border border-white border-opacity-30 rounded-xl bg-white bg-opacity-10 text-white placeholder-white placeholder-opacity-70"
           />
+        </div>
+        <div className="input-group">
           <input
             type="password"
             placeholder="Password"
+            value={loginData.password}
+            onChange={(e) => setLoginData({ ...loginData, password: e.target.value })}
             required
-            className="w-full p-4 border border-white border-opacity-30 rounded-xl bg-white bg-opacity-10 text-white placeholder-white placeholder-opacity-70"
           />
-          {!isLogin && (
-            <input
-              type="password"
-              placeholder="Confirm Password"
-              required
-              className="w-full p-4 border border-white border-opacity-30 rounded-xl bg-white bg-opacity-10 text-white placeholder-white placeholder-opacity-70"
-            />
-          )}
-          <button
-            type="submit"
-            className="w-full bg-gradient-to-r from-blue-500 to-purple-600 text-white p-4 rounded-xl text-lg font-bold mt-6"
-          >
-            {isLogin ? 'Sign In' : 'Create Account'}
-          </button>
-        </form>
-
-        <p className="text-center mt-4 text-white text-opacity-80">
-          {isLogin ? "Don't have an account? " : "Already have an account? "}
-          <button
-            onClick={() => setCurrentPage(isLogin ? 'register' : 'login')}
-            className="text-white font-bold hover:underline"
-          >
-            {isLogin ? 'Sign up' : 'Sign in'}
-          </button>
+        </div>
+        <button type="submit" className="auth-btn">Sign In</button>
+        <p className="switch-link">
+          Don't have an account? <button onClick={() => setActivePage('register')}>Sign up</button>
         </p>
-      </div>
+      </form>
     </div>
   );
 
-  const ProfilePage = () => (
-    <div className="max-w-4xl mx-auto">
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        <div className="bg-white bg-opacity-10 backdrop-blur-md p-8 rounded-3xl text-center">
-          <div className="w-24 h-24 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full mx-auto mb-4 flex items-center justify-center text-4xl">
+  const renderRegister = () => (
+    <div className="auth-container">
+      <form className="auth-card" onSubmit={handleRegister}>
+        <div className="auth-header">
+          <h1>Create Account</h1>
+          <p>Join us to start your journey!</p>
+        </div>
+        <div className="input-group">
+          <input
+            type="text"
+            placeholder="Username"
+            value={registerData.username}
+            onChange={(e) => setRegisterData({ ...registerData, username: e.target.value })}
+            required
+          />
+        </div>
+        <div className="input-group">
+          <input
+            type="email"
+            placeholder="Email address"
+            value={registerData.email}
+            onChange={(e) => setRegisterData({ ...registerData, email: e.target.value })}
+            required
+          />
+        </div>
+        <div className="input-group">
+          <input
+            type="password"
+            placeholder="Password"
+            value={registerData.password}
+            onChange={(e) => setRegisterData({ ...registerData, password: e.target.value })}
+            required
+          />
+        </div>
+        <div className="input-group">
+          <input
+            type="password"
+            placeholder="Confirm Password"
+            value={registerData.confirmPassword}
+            onChange={(e) => setRegisterData({ ...registerData, confirmPassword: e.target.value })}
+            required
+          />
+        </div>
+        <button type="submit" className="auth-btn">Create Account</button>
+        <p className="switch-link">
+          Already have an account? <button onClick={() => setActivePage('login')}>Sign in</button>
+        </p>
+      </form>
+    </div>
+  );
+
+  const renderProfile = () => (
+    <div className="profile">
+      <div className="profile-container">
+        <div className="profile-sidebar">
+          <div className="profile-avatar">
             👤
           </div>
-          <h2 className="text-white text-2xl font-bold mb-2">John Doe</h2>
-          <p className="text-white text-opacity-80 mb-6">Content Creator</p>
-          <button className="bg-gradient-to-r from-blue-500 to-purple-600 text-white px-6 py-3 rounded-full">
-            Edit Profile
-          </button>
+          <h2 className="profile-name">{profileData.username}</h2>
+          <p className="profile-role">Content Creator</p>
+          <button className="profile-edit-btn">Edit Profile</button>
         </div>
 
-        <div className="lg:col-span-2 bg-white bg-opacity-10 backdrop-blur-md p-8 rounded-3xl">
-          <h2 className="text-white text-2xl font-bold mb-8">Profile Settings</h2>
-          <form className="space-y-6">
-            <div>
-              <label className="block text-white mb-2 font-medium">Username</label>
+        <div className="profile-details">
+          <h2>Profile Settings</h2>
+          <form className="profile-form" onSubmit={handleProfileUpdate}>
+            <div className="form-group">
+              <label htmlFor="username">Username</label>
               <input
                 type="text"
+                id="username"
+                value={profileData.username}
+                onChange={(e) => setProfileData({ ...profileData, username: e.target.value })}
                 placeholder="Enter your username"
-                className="w-full p-4 border border-white border-opacity-30 rounded-xl bg-white bg-opacity-10 text-white placeholder-white placeholder-opacity-70"
               />
             </div>
-            <div>
-              <label className="block text-white mb-2 font-medium">Email address</label>
+
+            <div className="form-group">
+              <label htmlFor="email">Email address</label>
               <input
                 type="email"
+                id="email"
+                value={profileData.email}
+                onChange={(e) => setProfileData({ ...profileData, email: e.target.value })}
                 placeholder="Enter your email"
-                className="w-full p-4 border border-white border-opacity-30 rounded-xl bg-white bg-opacity-10 text-white placeholder-white placeholder-opacity-70"
               />
             </div>
-            <div>
-              <label className="block text-white mb-2 font-medium">Bio</label>
+
+            <div className="form-group">
+              <label htmlFor="bio">Bio</label>
               <textarea
+                id="bio"
                 rows="4"
+                value={profileData.bio}
+                onChange={(e) => setProfileData({ ...profileData, bio: e.target.value })}
                 placeholder="Write something about yourself..."
-                className="w-full p-4 border border-white border-opacity-30 rounded-xl bg-white bg-opacity-10 text-white placeholder-white placeholder-opacity-70 resize-none"
               />
             </div>
-            <button
-              type="submit"
-              className="bg-gradient-to-r from-blue-500 to-purple-600 text-white px-8 py-4 rounded-xl font-bold"
-            >
-              Save Changes
-            </button>
+
+            <button type="submit" className="profile-save-btn">Save Changes</button>
           </form>
         </div>
       </div>
     </div>
   );
 
-  const Footer = () => (
-    <footer className="bg-black bg-opacity-30 text-white p-8 mt-8">
-      <div className="max-w-6xl mx-auto">
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-8 mb-8">
-          <div>
-            <h2 className="text-xl font-bold mb-4">⚡ AI Creator Studio</h2>
-            <p className="opacity-80">منصة متطورة لإنشاء المحتوى المرئي باستخدام أحدث تقنيات الذكاء الاصطناعي</p>
-          </div>
-          <div>
-            <h3 className="font-semibold mb-4">المنتجات</h3>
-            <ul className="space-y-1 opacity-80">
-              <li>مولد الصور</li>
-              <li>مولد الفيديو</li>
-              <li>محرر النصوص</li>
-              <li>API للمطورين</li>
-            </ul>
-          </div>
-          <div>
-            <h3 className="font-semibold mb-4">الشركة</h3>
-            <ul className="space-y-1 opacity-80">
-              <li>من نحن</li>
-              <li>التسعير</li>
-              <li>المدونة</li>
-              <li>الوظائف</li>
-            </ul>
-          </div>
-          <div>
-            <h3 className="font-semibold mb-4">الدعم</h3>
-            <ul className="space-y-1 opacity-80">
-              <li>مركز المساعدة</li>
-              <li>اتصل بنا</li>
-              <li>الشروط والأحكام</li>
-              <li>سياسة الخصوصية</li>
-            </ul>
-          </div>
+  const renderFooter = () => (
+    <footer className="footer">
+      <div className="footer-container">
+        <div className="footer-section brand">
+          <h2>⚡ AI Creator Studio</h2>
+          <p>منصة متطورة لإنشاء المحتوى المرئي باستخدام أحدث تقنيات الذكاء الاصطناعي</p>
         </div>
-        
-        <div className="border-t border-white border-opacity-20 pt-8 text-center">
-          <p className="mb-4">© 2024 AI Creator Studio. جميع الحقوق محفوظة.</p>
-          <div className="flex justify-center gap-4 text-2xl">
-            <span>📘</span>
-            <span>📷</span>
-            <span>🐦</span>
-            <span>💼</span>
-          </div>
+        <div className="footer-section">
+          <h3>المنتجات</h3>
+          <ul>
+            <li>مولد الصور</li>
+            <li>مولد الفيديو</li>
+            <li>محرر النصوص</li>
+            <li>API للمطورين</li>
+          </ul>
+        </div>
+        <div className="footer-section">
+          <h3>الشركة</h3>
+          <ul>
+            <li>من نحن</li>
+            <li>التسعير</li>
+            <li>المدونة</li>
+            <li>الوظائف</li>
+          </ul>
+        </div>
+        <div className="footer-section">
+          <h3>الدعم</h3>
+          <ul>
+            <li>مركز المساعدة</li>
+            <li>اتصل بنا</li>
+            <li>الشروط والأحكام</li>
+            <li>سياسة الخصوصية</li>
+          </ul>
+        </div>
+      </div>
+      <div className="footer-bottom">
+        <p>© 2024 AI Creator Studio. جميع الحقوق محفوظة.</p>
+        <div className="social-icons">
+          <span style={{ fontSize: '1.5rem' }}>📘 📷 🐦 💼</span>
         </div>
       </div>
     </footer>
   );
 
-  const renderCurrentPage = () => {
-    switch (currentPage) {
-      case 'dashboard':
-        return <DashboardPage />;
-      case 'gallery':
-        return <GalleryPage />;
-      case 'login':
-        return <AuthForm isLogin={true} />;
-      case 'register':
-        return <AuthForm isLogin={false} />;
-      case 'profile':
-        return <ProfilePage />;
-      default:
-        return <DashboardPage />;
-    }
-  };
-
-  return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-500 to-purple-600">
-      <Header />
-      <main className="p-8">
-        {renderCurrentPage()}
-      </main>
-      <Footer />
+  const renderLoadingOverlay = () => (
+    <div className="loading-overlay">
+      <div className="loading-content">
+        <div className="loading-spinner"></div>
+        <p>جاري إنشاء المحتوى...</p>
+      </div>
     </div>
   );
-};
 
-export default AICreateStudio;
+  return (
+    <div className="app">
+      {renderHeader()}
+      <main className="main-content">
+        {activePage === 'dashboard' && renderDashboard()}
+        {activePage === 'gallery' && renderGallery()}
+        {activePage === 'login' && renderLogin()}
+        {activePage === 'register' && renderRegister()}
+        {activePage === 'profile' && renderProfile()}
+      </main>
+      {renderFooter()}
+      {isGenerating && renderLoadingOverlay()}
+    </div>
+  );
+}
+
+export default AI; 
