@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import './AI.css';
 
-function AI() {
+function AICreateStudio() {
   // State for active page
   const [activePage, setActivePage] = useState('dashboard');
   
@@ -34,19 +34,22 @@ function AI() {
     bio: 'Content Creator'
   });
 
+  // Subscription states
+  const [showPaymentModal, setShowPaymentModal] = useState(false);
+
   // Mock content data
   const [content] = useState([
     {
       id: 1,
       type: 'image',
-      url: 'https://via.placeholder.com/400x300',
+      url: 'https://via.placeholder.com/400x300/667eea/ffffff?text=AI+Generated+Image',
       description: 'A serene mountain landscape',
       timestamp: '2024-03-20T10:00:00Z'
     },
     {
       id: 2,
       type: 'video',
-      url: 'https://via.placeholder.com/400x300',
+      url: 'https://via.placeholder.com/400x300/764ba2/ffffff?text=AI+Generated+Video',
       description: 'City lights time-lapse',
       timestamp: '2024-03-19T15:30:00Z'
     }
@@ -55,13 +58,12 @@ function AI() {
   // Handlers
   const handleGenerate = (type) => {
     setIsGenerating(true);
-    // Simulate API call with timeout
     setTimeout(() => {
       const newContent = {
         id: Date.now(),
         type: type,
         description: type === 'image' ? imageDesc : videoDesc,
-        url: 'https://via.placeholder.com/400x300',
+        url: `https://via.placeholder.com/400x300/${type === 'image' ? '667eea' : '764ba2'}/ffffff?text=AI+Generated+${type}`,
         timestamp: new Date().toISOString()
       };
       setGeneratedContent([newContent, ...generatedContent]);
@@ -87,6 +89,15 @@ function AI() {
     console.log('Profile update:', profileData);
   };
 
+  const handleSubscribe = () => {
+    setShowPaymentModal(true);
+  };
+
+  const handlePaymentChoice = (method) => {
+    alert(`Payment method selected: ${method}`);
+    setShowPaymentModal(false);
+  };
+
   // Render functions
   const renderHeader = () => (
     <header className="header">
@@ -106,6 +117,12 @@ function AI() {
           onClick={() => setActivePage('gallery')}
         >
           Gallery
+        </button>
+        <button 
+          className={`nav-link ${activePage === 'subscription' ? 'active' : ''}`}
+          onClick={() => setActivePage('subscription')}
+        >
+          Subscribe
         </button>
         <button 
           className={`nav-link ${activePage === 'register' ? 'active' : ''}`}
@@ -281,7 +298,7 @@ function AI() {
           />
         </div>
         <div className="gallery-actions">
-          <button className="filter-btn">🔍 Newest First ▾</button>
+          <button className="filter-btn">📅 Newest First ▾</button>
           <button 
             className={`layout-btn ${layout === 'grid' ? 'active' : ''}`}
             onClick={() => setLayout('grid')}
@@ -342,6 +359,73 @@ function AI() {
     </div>
   );
 
+  const renderSubscription = () => (
+    <div className="subscription-page">
+      <section className="subscription-hero">
+        <h1>
+          <span className="bold">Choose Your</span>{' '}
+          <span className="highlight-premium">Premium Plan</span>
+        </h1>
+        <p className="subtitle">Enjoy unlimited features with AI Plus</p>
+      </section>
+
+      <div className="subscription-card">
+        <div className="badge">⭐ Premium Plan</div>
+
+        <h2 className="plan-title">AI Plus</h2>
+        <div className="plan-price">
+          $10 <span>/month</span>
+        </div>
+
+        <ul className="plan-features">
+          {[
+            'Unlimited image generation',
+            'Create 4K videos',
+            'Priority processing',
+            'Access to all art styles',
+            '24/7 technical support',
+            'Download without watermark',
+          ].map((f, i) => (
+            <li key={i}>
+              <span>{f}</span> <span className="check">✓</span>
+            </li>
+          ))}
+        </ul>
+
+        <button className="subscribe-btn" onClick={handleSubscribe}>
+          🚀 Subscribe Now
+        </button>
+        <p className="cancel-note">You can cancel your subscription at any time</p>
+      </div>
+
+      {showPaymentModal && (
+        <div className="payment-overlay" onClick={() => setShowPaymentModal(false)}>
+          <div className="payment-modal" onClick={(e) => e.stopPropagation()}>
+            <h2>Choose Payment Method</h2>
+            <p>Please select your preferred payment method</p>
+            <div className="payment-options">
+              <button
+                className="payment-btn visa"
+                onClick={() => handlePaymentChoice('Visa / MasterCard')}
+              >
+                💳 Visa / MasterCard
+              </button>
+              <button
+                className="payment-btn paypal"
+                onClick={() => handlePaymentChoice('PayPal')}
+              >
+                🟦 PayPal
+              </button>
+              <button className="payment-cancel" onClick={() => setShowPaymentModal(false)}>
+                Cancel
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+
   const renderLogin = () => (
     <div className="auth-container">
       <form className="auth-card" onSubmit={handleLogin}>
@@ -369,7 +453,7 @@ function AI() {
         </div>
         <button type="submit" className="auth-btn">Sign In</button>
         <p className="switch-link">
-          Don't have an account? <button onClick={() => setActivePage('register')}>Sign up</button>
+          Don't have an account? <button type="button" onClick={() => setActivePage('register')}>Sign up</button>
         </p>
       </form>
     </div>
@@ -420,7 +504,7 @@ function AI() {
         </div>
         <button type="submit" className="auth-btn">Create Account</button>
         <p className="switch-link">
-          Already have an account? <button onClick={() => setActivePage('login')}>Sign in</button>
+          Already have an account? <button type="button" onClick={() => setActivePage('login')}>Sign in</button>
         </p>
       </form>
     </div>
@@ -467,7 +551,7 @@ function AI() {
               <label htmlFor="bio">Bio</label>
               <textarea
                 id="bio"
-                rows="4"
+                rows={4}
                 value={profileData.bio}
                 onChange={(e) => setProfileData({ ...profileData, bio: e.target.value })}
                 placeholder="Write something about yourself..."
@@ -486,40 +570,40 @@ function AI() {
       <div className="footer-container">
         <div className="footer-section brand">
           <h2>⚡ AI Creator Studio</h2>
-          <p>منصة متطورة لإنشاء المحتوى المرئي باستخدام أحدث تقنيات الذكاء الاصطناعي</p>
+          <p>Advanced platform for creating visual content using cutting-edge artificial intelligence technology</p>
         </div>
         <div className="footer-section">
-          <h3>المنتجات</h3>
+          <h3>Products</h3>
           <ul>
-            <li>مولد الصور</li>
-            <li>مولد الفيديو</li>
-            <li>محرر النصوص</li>
-            <li>API للمطورين</li>
+            <li>Image Generator</li>
+            <li>Video Generator</li>
+            <li>Text Editor</li>
+            <li>Developer API</li>
           </ul>
         </div>
         <div className="footer-section">
-          <h3>الشركة</h3>
+          <h3>Company</h3>
           <ul>
-            <li>من نحن</li>
-            <li>التسعير</li>
-            <li>المدونة</li>
-            <li>الوظائف</li>
+            <li>About Us</li>
+            <li>Pricing</li>
+            <li>Blog</li>
+            <li>Careers</li>
           </ul>
         </div>
         <div className="footer-section">
-          <h3>الدعم</h3>
+          <h3>Support</h3>
           <ul>
-            <li>مركز المساعدة</li>
-            <li>اتصل بنا</li>
-            <li>الشروط والأحكام</li>
-            <li>سياسة الخصوصية</li>
+            <li>Help Center</li>
+            <li>Contact Us</li>
+            <li>Terms & Conditions</li>
+            <li>Privacy Policy</li>
           </ul>
         </div>
       </div>
       <div className="footer-bottom">
-        <p>© 2024 AI Creator Studio. جميع الحقوق محفوظة.</p>
+        <p>© 2024 AI Creator Studio. All rights reserved.</p>
         <div className="social-icons">
-          <span style={{ fontSize: '1.5rem' }}>📘 📷 🐦 💼</span>
+          <span style={{ fontSize: '1.5rem' }}>📘 📷 🦅 💼</span>
         </div>
       </div>
     </footer>
@@ -529,7 +613,7 @@ function AI() {
     <div className="loading-overlay">
       <div className="loading-content">
         <div className="loading-spinner"></div>
-        <p>جاري إنشاء المحتوى...</p>
+        <p>Creating content...</p>
       </div>
     </div>
   );
@@ -540,6 +624,7 @@ function AI() {
       <main className="main-content">
         {activePage === 'dashboard' && renderDashboard()}
         {activePage === 'gallery' && renderGallery()}
+        {activePage === 'subscription' && renderSubscription()}
         {activePage === 'login' && renderLogin()}
         {activePage === 'register' && renderRegister()}
         {activePage === 'profile' && renderProfile()}
@@ -550,4 +635,4 @@ function AI() {
   );
 }
 
-export default AI; 
+export default AICreateStudio;
