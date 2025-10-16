@@ -7,6 +7,21 @@ function AICreateStudio() {
   
   // Dashboard states
   const [activeTab, setActiveTab] = useState('images');
+  
+  // Feedback states
+  const [feedbackType, setFeedbackType] = useState('suggestion');
+  const [feedbackData, setFeedbackData] = useState({
+    name: '',
+    email: '',
+    title: '',
+    description: '',
+    category: 'general',
+    rating: 0
+  });
+  const [feedbackList, setFeedbackList] = useState([]);
+  const [successMessage, setSuccessMessage] = useState('');
+  const [errorMessage, setErrorMessage] = useState('');
+  
   const [imageDesc, setImageDesc] = useState('');
   const [videoDesc, setVideoDesc] = useState('');
   const [generatedContent, setGeneratedContent] = useState([]);
@@ -56,6 +71,52 @@ function AICreateStudio() {
   ]);
 
   // Handlers
+  const handleFeedbackChange = (e) => {
+    const { name, value } = e.target;
+    setFeedbackData(prev => ({
+      ...prev,
+      [name]: value
+    }));
+    setErrorMessage('');
+  };
+
+  const handleRating = (rating) => {
+    setFeedbackData(prev => ({
+      ...prev,
+      rating: rating === prev.rating ? 0 : rating
+    }));
+  };
+
+  const handleSubmitFeedback = (e) => {
+    e.preventDefault();
+
+    if (!feedbackData.name || !feedbackData.email || !feedbackData.title || !feedbackData.description) {
+      setErrorMessage('Please fill in all required fields');
+      return;
+    }
+
+    const newFeedback = {
+      id: Date.now(),
+      type: feedbackType,
+      ...feedbackData,
+      timestamp: new Date().toLocaleString()
+    };
+
+    setFeedbackList([newFeedback, ...feedbackList]);
+    setSuccessMessage(`Your ${feedbackType} has been submitted successfully! Thank you for your feedback.`);
+
+    setFeedbackData({
+      name: '',
+      email: '',
+      title: '',
+      description: '',
+      category: 'general',
+      rating: 0
+    });
+
+    setTimeout(() => setSuccessMessage(''), 5000);
+  };
+
   const handleGenerate = (type) => {
     setIsGenerating(true);
     setTimeout(() => {
@@ -123,6 +184,12 @@ function AICreateStudio() {
           onClick={() => setActivePage('subscription')}
         >
           Subscribe
+        </button>
+        <button 
+          className={`nav-link ${activePage === 'feedback' ? 'active' : ''}`}
+          onClick={() => setActivePage('feedback')}
+        >
+          Feedback
         </button>
         <button 
           className={`nav-link ${activePage === 'register' ? 'active' : ''}`}
@@ -200,16 +267,7 @@ function AICreateStudio() {
                   onChange={(e) => setImageDesc(e.target.value)}
                   placeholder="e.g., 'A serene mountain landscape at sunset with purple clouds'"
                 />
-                <div className="style-buttons">
-                  <button>Photorealistic</button>
-                  <button>Digital Art</button>
-                  <button>Oil Painting</button>
-                  <button>Sketch</button>
-                  <button>Watercolor</button>
-                  <button>Abstract</button>
-                  <button>Anime</button>
-                  <button>Cyberpunk</button>
-                </div>
+                
                 <div className="dropdown-row">
                   <select id="img-dim">
                     <option>Square (1024x1024)</option>
@@ -426,6 +484,152 @@ function AICreateStudio() {
     </div>
   );
 
+  const renderFeedback = () => (
+    <div className="feedback-page">
+      <div className="feedback-header">
+        <h1>Feedback & Suggestions</h1>
+        <p>Your opinion matters! Help us improve our service</p>
+      </div>
+
+      <div className="feedback-tabs">
+        <button
+          className={`feedback-tab-btn ${feedbackType === 'suggestion' ? 'active' : ''}`}
+          onClick={() => setFeedbackType('suggestion')}
+        >
+          💡 Suggestion
+        </button>
+        <button
+          className={`feedback-tab-btn ${feedbackType === 'complaint' ? 'active' : ''}`}
+          onClick={() => setFeedbackType('complaint')}
+        >
+          ⚠️ Complaint
+        </button>
+        <button
+          className={`feedback-tab-btn ${feedbackType === 'bug' ? 'active' : ''}`}
+          onClick={() => setFeedbackType('bug')}
+        >
+          🐛 Bug Report
+        </button>
+      </div>
+
+      {successMessage && <div className="success-message">{successMessage}</div>}
+      {errorMessage && <div className="error-message">{errorMessage}</div>}
+
+      <div className="feedback-form-container">
+        <form className="feedback-form" onSubmit={handleSubmitFeedback}>
+          <div className="form-row">
+            <div className="form-group">
+              <label>Name *</label>
+              <input
+                type="text"
+                name="name"
+                value={feedbackData.name}
+                onChange={handleFeedbackChange}
+                placeholder="Enter your full name"
+              />
+            </div>
+
+            <div className="form-group">
+              <label>Email *</label>
+              <input
+                type="email"
+                name="email"
+                value={feedbackData.email}
+                onChange={handleFeedbackChange}
+                placeholder="example@email.com"
+              />
+            </div>
+          </div>
+
+          <div className="form-group">
+            <label>Title *</label>
+            <input
+              type="text"
+              name="title"
+              value={feedbackData.title}
+              onChange={handleFeedbackChange}
+              placeholder="Brief subject"
+              maxLength="100"
+            />
+            <div className="char-count">{feedbackData.title.length}/100</div>
+          </div>
+
+          <div className="form-group">
+            <label>Category</label>
+            <select
+              name="category"
+              value={feedbackData.category}
+              onChange={handleFeedbackChange}
+            >
+              <option value="general">General</option>
+              <option value="features">Features & Capabilities</option>
+              <option value="performance">Performance & Speed</option>
+              <option value="ui">Design & Interface</option>
+              <option value="customer-service">Customer Service</option>
+              <option value="pricing">Pricing</option>
+            </select>
+          </div>
+
+          <div className="form-group">
+            <label>Details *</label>
+            <textarea
+              name="description"
+              value={feedbackData.description}
+              onChange={handleFeedbackChange}
+              placeholder="Explain your idea or issue in detail..."
+              maxLength="1000"
+            />
+            <div className="char-count">{feedbackData.description.length}/1000</div>
+          </div>
+
+          {feedbackType === 'suggestion' && (
+            <div className="form-group">
+              <label>How would you rate this suggestion?</label>
+              <div className="rating-group">
+                {[1, 2, 3, 4, 5].map(star => (
+                  <button
+                    key={star}
+                    type="button"
+                    onClick={() => handleRating(star)}
+                    className="star-btn"
+                    style={{ opacity: feedbackData.rating >= star ? 1 : 0.3 }}
+                  >
+                    ⭐
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+
+          <button type="submit" className="submit-btn">
+            Submit {feedbackType === 'suggestion' ? 'Suggestion' : feedbackType === 'complaint' ? 'Complaint' : 'Report'}
+          </button>
+        </form>
+      </div>
+
+      {feedbackList.length > 0 && (
+        <div className="feedback-list-section">
+          <h2>Recent Submissions</h2>
+          {feedbackList.map(feedback => (
+            <div key={feedback.id} className="feedback-item">
+              <div className="feedback-item-header">
+                <h3>{feedback.title}</h3>
+                <span className="feedback-item-time">{feedback.timestamp}</span>
+              </div>
+              <p className="feedback-item-meta">
+                <strong>From:</strong> {feedback.name} ({feedback.email})
+              </p>
+              <p className="feedback-item-meta">
+                <strong>Type:</strong> {feedback.type === 'suggestion' ? 'Suggestion' : feedback.type === 'complaint' ? 'Complaint' : 'Bug Report'}
+              </p>
+              <p className="feedback-item-desc">{feedback.description}</p>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+
   const renderLogin = () => (
     <div className="auth-container">
       <form className="auth-card" onSubmit={handleLogin}>
@@ -625,6 +829,7 @@ function AICreateStudio() {
         {activePage === 'dashboard' && renderDashboard()}
         {activePage === 'gallery' && renderGallery()}
         {activePage === 'subscription' && renderSubscription()}
+        {activePage === 'feedback' && renderFeedback()}
         {activePage === 'login' && renderLogin()}
         {activePage === 'register' && renderRegister()}
         {activePage === 'profile' && renderProfile()}
